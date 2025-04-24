@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import axios from "axios";
 import { useState } from "react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createQueryString = (params: Record<string, any>) => {
   return Object.keys(params)
     .map((key) => `${key}=${params[key]}`)
@@ -12,27 +12,70 @@ const createQueryString = (params: Record<string, any>) => {
 
 export default function Home() {
   //#region Data
+  const [step, setStep] = useState(1);
+
   const [token1, setToken1] = useState("");
+  const [baseUrl, setBaseUrl] = useState("");
+
   const [token2, setToken2] = useState("");
   const [url, setUrl] = useState("");
+  const [clk, setClk] = useState("");
+
   const [otp, setOtp] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
   //#endregion
 
   //#region Event
-  const onSubmit = async () => {
-    const domain = new URL(url).origin;
+  const getLink = async () => {
+    try {
+      const res = await axios.post(
+        "https://toolgamepc.com/wp-json/myplugin/v1/get_shortened_url"
+      );
+      const url = res.data?.url;
+
+      const el = document.getElementById("link-get-code");
+      if (el) {
+        el.innerText = url;
+      }
+    } catch (error: any) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleSubmit1 = async () => {
     const params1 = createQueryString({
       codexn: token1,
-      url: domain,
+      url: baseUrl,
       loai_traffic: "https://www.google.com/",
       clk: "null",
     });
-    await axios.post(`https://traffic-user.net/GET_MA.php?${params1}`);
+    const res = await axios.post(
+      `https://traffic-user.net/GET_MA.php?${params1}`
+    );
 
+    const data = res.data;
+
+    const match = data.match(
+      /sessionStorage\.setItem\(\s*["']ymnclk["']\s*,\s*(\d+)\s*\)/
+    );
+
+    if (match) {
+      const ymnclkValue = match[1];
+      setClk(ymnclkValue);
+    }
+
+    setStep(2);
+    try {
+    } catch (error: any) {
+      console.error("Error:", error);
+    }
+  };
+
+  const onSubmit = async () => {
     const params2 = createQueryString({
       codexn: token2,
       url: url,
-      loai_traffic: domain,
+      loai_traffic: baseUrl,
       clk: "1734188725",
     });
     const res = await axios.post(
@@ -53,6 +96,7 @@ export default function Home() {
 
   const onCopy = () => {
     navigator.clipboard.writeText(otp);
+    setIsCopied(true);
   };
   //#endregion
 
@@ -60,13 +104,27 @@ export default function Home() {
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-          Hehe
+        <h2 className="text-center text-2xl/9 font-bold tracking-tight text-gray-900">
+          Get code
         </h2>
       </div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <div className="space-y-4">
+      <div className="mt-5 sm:mx-auto sm:w-full sm:max-w-sm">
+        <div className="flex flex-col gap-y-2">
+          <button
+            onClick={getLink}
+            className="mt-5 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm 
+    hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            Get Link
+          </button>
+
+          <span id="link-get-code">
+            Bấm get link và mở nó trong tab ẩn danh
+          </span>
+
+          <div className="border-t border-dashed border-gray-300 w-full my-4"></div>
+
           <div>
             <label
               htmlFor="token-1"
@@ -74,14 +132,16 @@ export default function Home() {
             >
               Token 1
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
-                type="token-1"
                 name="token-1"
                 id="token-1"
                 autoComplete="off"
                 required
-                className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                disabled={step === 2}
+                className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 
+    focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6
+    disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:placeholder:text-gray-400"
                 value={token1}
                 onChange={(event) => setToken1(event.target.value)}
               />
@@ -89,14 +149,47 @@ export default function Home() {
           </div>
           <div>
             <label
+              htmlFor="baseUrl"
+              className="block text-sm/6 font-medium text-gray-900"
+            >
+              Base URL
+            </label>
+            <div className="mt-1">
+              <input
+                name="baseUrl"
+                id="baseUrl"
+                autoComplete="off"
+                required
+                disabled={step === 2}
+                className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 
+    focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6
+    disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:placeholder:text-gray-400"
+                value={baseUrl}
+                onChange={(event) => setBaseUrl(event.target.value)}
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleSubmit1}
+            disabled={step === 2 || !token1 || !baseUrl}
+            className="mt-5 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm 
+    hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600
+    disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          >
+            Bước 1
+          </button>
+
+          <div className="border-t border-dashed border-gray-300 w-full my-4"></div>
+
+          <div>
+            <label
               htmlFor="token-2"
               className="block text-sm/6 font-medium text-gray-900"
             >
               Token 2
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
-                type="token-2"
                 name="token-2"
                 id="token-2"
                 autoComplete="off"
@@ -114,9 +207,8 @@ export default function Home() {
             >
               URL
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
-                type="url"
                 name="url"
                 id="url"
                 autoComplete="off"
@@ -124,6 +216,28 @@ export default function Home() {
                 className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              htmlFor="clk"
+              className="block text-sm/6 font-medium text-gray-900"
+            >
+              CLK
+            </label>
+            <div className="mt-1">
+              <input
+                name="clk"
+                id="clk"
+                autoComplete="off"
+                required
+                disabled
+                value={clk}
+                // onChange={(event) => setClk(event.target.value)}
+                className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 
+    focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6
+    disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed disabled:placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -137,17 +251,19 @@ export default function Home() {
                   <path d="M384 336l-192 0c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l140.1 0L400 115.9 400 320c0 8.8-7.2 16-16 16zM192 384l192 0c35.3 0 64-28.7 64-64l0-204.1c0-12.7-5.1-24.9-14.1-33.9L366.1 14.1c-9-9-21.2-14.1-33.9-14.1L192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-32-48 0 0 32c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l32 0 0-48-32 0z" />
                 </svg>
               </span>
+              {isCopied && <span className="text-green-500">Đã sao chép</span>}
             </div>
           )}
 
-          <div>
-            <button
-              onClick={onSubmit}
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Lấy mã
-            </button>
-          </div>
+          <button
+            onClick={onSubmit}
+            disabled={step === 1 || !token2 || !url}
+            className="mt-5 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm 
+    hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600
+    disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          >
+            Lấy mã
+          </button>
         </div>
       </div>
     </div>
