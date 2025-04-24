@@ -165,6 +165,17 @@ export default function Home() {
                 </svg>
               </span>
             </div>
+
+            <p>
+              Bước 1: - Mở trang web+devtool cần tìm code lên, copy và dán
+              Command 1 vào console. Đợi 4 giây, sau đó copy tiếp Command 2 và
+              dán vào console; sau khi thực hiện xong thì bấm vào 1 slug khác
+              trong web
+              <br />
+              Bước 2: - Copy và dán Command 1 vào console và đợi 4 giây và tiếp
+              Command 2 như bước 1, sau đó mở tab network của devtool xem api
+              GET_MA dưới cùng để lấy mã
+            </p>
           </div>
           <div className="border-r border-solid border-slate-200"></div>
           <div className="flex flex-[0.45] flex-col gap-y-2">
